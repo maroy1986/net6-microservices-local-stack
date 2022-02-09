@@ -1,0 +1,70 @@
+version: '3.8'
+  
+services:
+  webapplication1:
+    image: webappapi
+    depends_on:
+      - mssqldev
+    build:
+      context: .
+      dockerfile: WebAppApi/Dockerfile
+    ports:
+      - "5001:80"
+    networks:
+      - nginx-proxy
+  webapplication2:
+    image: webappapi2
+    depends_on:
+      - mssqldev
+    build:
+        context: .
+        dockerfile: WebAppApi2/Dockerfile
+    ports:
+        - "5002:80"
+    networks:
+        - nginx-proxy
+  webapplication3:
+    image: webappapi3
+    depends_on:
+      - mssqldev
+    build:
+      context: .
+      dockerfile: WebAppApi3/Dockerfile
+    ports:
+      - "5003:80"
+    networks:
+      - nginx-proxy
+  mssqldev:
+    image: "mcr.microsoft.com/mssql/server"
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P SomeHardPasswordNotGonnaLie2022! -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      retries: 10
+      start_period: 10s
+      timeout: 3s 
+    container_name: mssql-dev
+    environment:
+        SA_PASSWORD: "SomeHardPasswordNotGonnaLie2022!" # Do not hardcode your password here, this is just for demo purpose.
+        ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    networks:
+      - nginx-proxy
+  reverseproxy:
+    image: reverseproxy_dev:latest
+    container_name: reverse-proxy-dev
+    restart: always
+    depends_on:
+      - webapplication1
+      - webapplication3
+    ports:
+      - "8080:8080" 
+    build:
+      context: .
+      dockerfile: Containers/proxy/Dockerfile
+    networks:
+      - nginx-proxy
+
+networks:
+  nginx-proxy:
