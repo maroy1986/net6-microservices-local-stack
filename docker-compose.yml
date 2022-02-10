@@ -36,7 +36,10 @@ services:
       - nginx-proxy
   mssqldev:
     image: "mcr.microsoft.com/mssql/server"
+    user: root
     restart: always
+    volumes:
+      - mssql-server-linux-data:/var/opt/mssql/data
     healthcheck:
       test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P SomeHardPasswordNotGonnaLie2022! -Q 'SELECT 1' || exit 1"]
       interval: 10s
@@ -68,3 +71,6 @@ services:
 
 networks:
   nginx-proxy:
+
+volumes:
+  mssql-server-linux-data:
